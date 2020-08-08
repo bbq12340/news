@@ -30,13 +30,15 @@ def get_function(soup):
     s = soup.find_all("div", {"class": f"{title_class}"})
     for t in s:
         TITLE.append(t.text)
-    print(TITLE)
+
     s = soup.find_all("div", {"class": f"{company_class}"})
     for t in s:
         COMPANY.append(t.text)
+
     s = soup.find_all("div", {"class": f"{summary_class}"})
     for t in s:
         SUMMARY.append(t.text.replace("\n", ""))
+        
     s = soup.find_all("div", {"class": f"{href_class}"})
     for u in s:
         h = u.find('a')['href']
@@ -61,6 +63,3 @@ def search_google(num, query, enable_recent = False):
     df = pd.DataFrame(data)
     #df.to_csv('google.csv')
     return df
-df = query_google("테슬라", 0, enable_recent=False)
-get_function(df)
-print(df)

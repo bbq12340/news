@@ -58,5 +58,5 @@ def search_naver(num, query, enable_recent=False):
         '링크': HREF
     }
     df = pd.DataFrame(data)
-    df.to_csv("naver.csv")
+    #df.to_csv("naver.csv")
     return df
