@@ -6,6 +6,8 @@ from tkinter import messagebox
 from selenium import webdriver
 from webdriver_manager.chrome import ChromeDriverManager
 from datetime import datetime
+import requests
+from bs4 import BeautifulSoup
 import csv
 
 root = tk.Tk()
@@ -16,9 +18,33 @@ keyword = tk.StringVar()
 pages = tk.IntVar()
 recent = tk.IntVar()
 
+user_agent = {
+    'user-agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.88 Safari/537.36'
+}
+
+def csv_xlsx(csvfile, xslx):
+    f = pd.read_csv(csvfile)
+    f.to_excel(xslx, encoding='utf-8')
+
+def inv_info(csvfile):
+    TEXT = []
+    browser = webdriver.Chrome(ChromeDriverManager().install())
+    browser.get(f"https://www.google.com/search?q={keyword.get()}주식&source=lnms&tbm=fin")
+    url = browser.current_url
+    browser.close()
+    r = requests.get(url, headers=user_agent)
+    soup = BeautifulSoup(r.text, 'html.parser')
+    stock = soup.select_one('.N9cLBc').text
+    if stock:
+        TEXT.append(f"주가정보:{stock}")
+        TEXT.append(f"링크:{url}")
+        with open(csvfile, 'a') as c:
+            c_writer = csv.writer(c, delimiter=",")
+            c_writer.writerow(TEXT)
+
 def start_crawl():
-    print("Start Crawling")
     CSVFILE = f'{keyword.get()}.csv'
+    XLSX = f'{keyword.get()}.xlsx'
     try:
         if recent.get() == 0:
             google_df = google.search_google(pages.get(), keyword.get())
@@ -28,6 +54,8 @@ def start_crawl():
             frames = [google_df, naver_df]
             result = pd.concat(frames, ignore_index=True)
             result.to_csv(CSVFILE, encoding='utf-8')
+            inv_info(CSVFILE)
+            csv_xlsx(CSVFILE, XLSX)
             messagebox.showinfo("정보", "크롤링 완료!")
         elif recent.get() == 1:
             google_df = google.search_google(pages.get(), keyword.get(), enable_recent=True)
@@ -37,9 +65,9 @@ def start_crawl():
                 messagebox.showinfo("정보", "짧은 시간 내에 요청 수가 너무 많습니다.")
             result = pd.concat(frames, ignore_index=True)
             result.to_csv(CSVFILE, encoding='utf-8')
+            inv_info(CSVFILE)
+            csv_xlsx(CSVFILE, XLSX)
             messagebox.showinfo("정보", "크롤링 완료!")
-        browser = webdriver.Chrome(ChromeDriverManager().install())
-        browser.get(f"https://www.google.com/search?q={keyword.get()}&source=lnms&tbm=fin")
     except IndexError:
         messagebox.showerror("에러", "구글 또는 네이버의 페이지를 넘어가는 요청의 수입니다.")
 #label
@@ -48,6 +76,7 @@ keyword_label.grid(row=0, column=0, padx=5, pady=5)
 
 page_label = tk.Label(root, text="페이지 수:")
 page_label.grid(row=1, column=0, padx=5, pady=5)
+
 
 
 #entry
